@@ -110,7 +110,6 @@ function odaliskHelper() {
     this.$odaliskHelper.click(function() { return false; });
     
     this.addQuery = function(newQuery) {
-        
         $(this.$nextValue.val()).css({background:$(this.$nextValue.val()).attr("data-old-bckg")});
         this.$nextValue.val(newQuery);
         $(newQuery).attr("data-old-bckg", $(newQuery).css("background"));
@@ -131,6 +130,7 @@ function odaliskHelper() {
         newHtml.append(button);
         if(value != "")
         {
+            $(this.$nextValue.val()).css({background:$(this.$nextValue.val()).attr("data-old-bckg")});
             this.$fieldsKeeper.append(newHtml);
             this.$nextKey.val('');
             this.$nextValue.val('');
