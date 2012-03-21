@@ -74,6 +74,7 @@ td { vertical-align: top; }
 
 #odalisk-helper {
     z-index:10000000000 !important;
+    font-family:Helvetica !important;
     @import "./bootstrap/bootstrap.less";
     background:white;
     position:fixed;
@@ -89,6 +90,8 @@ td { vertical-align: top; }
     h2 {
         line-height:18px;
         margin-bottom:10px;
+        width:200px;
+        float:left;
     }
     
     .form-inline {
@@ -116,13 +119,68 @@ td { vertical-align: top; }
     
     #next-value {
     }
+    
+    #odalisk-display {
+        width:400px;
+        height:100px;
+        position:fixed;
+        right:410px;
+        bottom:10px;
+        .border-radius(4px);
+        background:RGBa(0,0,0,0.7);
+        border:1px solid RGBa(255,255,255,0.5);
+        
+        font-size:10px !important;
+        font-family:monaco !important;
+        color:white !important;
+        padding:5px;
+        overflow: auto;
+        
+        .display-key {
+            color:#00FF00;
+        }
+    }
 }
 
 
 
 
 
+.newCheckBox {
+    display: inline-block;
+    position: relative;
+    margin:auto;
+    top: 1px;
+    width: 30px;
+    height: 16px;
+    border-radius: 15px;
+    -webkit-box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.8) inset;
+    -moz-box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.8) inset;
+    -o-box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.8) inset;
+    box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.8) inset;
+    -webkit-transition: background 0.1s ease-in-out;
+    -moz-transition: background 0.1s ease-in-out;
+    -o-transition: background 0.1s ease-in-out;
+    transition: background 0.1s ease-in-out;
+    float:right;
+    
+}
 
+.newCheckBox:hover {
+    cursor: pointer;
+}
+.newCheckBox .newSwitch {
+    width: 12px;
+    height: 12px;
+    border-radius: 10px;
+    background-position:  center center;
+    box-sizing: content-box;
+    padding: 2px;
+    position: relative;
+}
+.newCheckBox input {
+    display: none !important;
+}
 
 
 

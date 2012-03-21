@@ -55,15 +55,20 @@ window.odalisk = new odaliskHelper();
 function odaliskHelper() {
     
     this.nbQuery = 0;
+    this.status = false;
     
     $("*").click(function() {
-        window.odalisk.addQuery($(this).getPath());
-        return false;
+        if(window.odalisk.status) {
+            window.odalisk.addQuery($(this).getPath());
+            return false;
+        }
     });
     
     
+    
+    
     //Fields keeper
-    this.$fieldsKeeper = $('<div  id="fields-keeper" class="form-inline"></div>');
+    this.$fieldsKeeper = $('<div  id="fields-keeper" class="form-inline">Commencez par ajouter un sélecteur css</div>');
     
     //next query
     this.$nextKey = $('<input class="input-small" placeholder="key" type="text"/>');
@@ -77,6 +82,7 @@ function odaliskHelper() {
     });
     
     this.$nextValue = $('<input class="input-perso2" placeholder="css query" type="text"/>');
+    
     this.$nextValue.keypress(function(e)
     {
         code = (e.keyCode ? e.keyCode : e.which);
@@ -91,13 +97,27 @@ function odaliskHelper() {
     this.$nextQuery = $('<div class="form-inline" id="next-query"></div>');
     this.$nextQuery.append(this.$nextKey).append(this.$nextValue).append(this.$nextButton);
     
+    //switch
+    
+    this.$checkbox = $('<input type="checkbox" onclick="concole.log(\'coucou\')" class="toSwitch"/>');
+    
+    
+    
+    
     //generate button
     this.$generateButton = $('<div class="btn btn-wide">Generate code</div>');
     
     this.$odaliskHelper = $('<div id="odalisk-helper"><h2>Odalisk Helper</h2></div>');
-    this.$odaliskHelper.append(this.$fieldsKeeper).append(this.$nextQuery).append(this.$generateButton);
+    
+    
+   
+   this.$odaliskDisplay = $('<div id="odalisk-display"></div>');
+    this.$odaliskHelper.append(this.$checkbox).append($('<div style="clear:both;"></div>')).append(this.$fieldsKeeper).append(this.$nextQuery).append(this.$generateButton).append(this.$odaliskDisplay);
+    
+    
     
     $("body").append(this.$odaliskHelper);
+    
     
     this.$nextButton.click(function() {
         window.odalisk.storeQuery();
@@ -126,15 +146,21 @@ function odaliskHelper() {
            window.odalisk.deleteQuery(parseInt($(this).attr("data-id"))); 
         });
         
+        
         var newHtml = $('<div class="odalisk-query"><input class="key input-small" placeholder="key" value="'+key+'" type="text"/><input class="value input-perso1" placeholder="css query" type="text" value="'+value+'"/></div>');
+        
         newHtml.append(button);
         if(value != "")
         {
             $(this.$nextValue.val()).css({background:$(this.$nextValue.val()).attr("data-old-bckg")});
+            if(this.nbQuery == 0) { this.$fieldsKeeper.text('') }
+            
             this.$fieldsKeeper.append(newHtml);
             this.$nextKey.val('');
             this.$nextValue.val('');
             this.$nextKey.focus();
+            
+            this.$odaliskDisplay.html(this.getResult());
         }
         else
         {
@@ -144,15 +170,25 @@ function odaliskHelper() {
     
     this.deleteQuery = function(queryId) {
         var queries = $("#fields-keeper").children();
+        
         for(var i in queries)
         {
             if(i == queryId)
             {
+                
                 $(queries[i]).remove();
                 this.nbQuery--;
+                this.$odaliskDisplay.html(this.getResult());
+                
+                if(this.nbQuery == 0)
+                {
+                    this.$fieldsKeeper.text('Commencez par ajouter un sélecteur css');
+                }
                 return;
             }
         }
+        
+        this.$odaliskDisplay.html(this.getResult());
     }
     
     this.generateCode = function() {
@@ -171,7 +207,95 @@ function odaliskHelper() {
         alert(php);
     }
     
+    this.getResult = function() {
+        var result = '';
+        var newQueries = $('#fields-keeper').children('.odalisk-query');
+        for(i in newQueries.toArray())
+        {
+            var query = $(newQueries[i]);
+            result += '<span class="display-key">[' + query.children('.key').val() + ']</span> ' + $(query.children('.value').val()).html() + '<br/>';
+        }
+        return result;
+    }
+    
+    this.enableOdaliskHelper = function(elem) {
+        window.odalisk.status = (window.odalisk.status) ? 1 : 0 ;
+    }
+    
+    this.initCheckBox = function(chkbx) {
+        var newCheckBox = document.createElement("div");
+        var newSwitch = document.createElement("div");
+        var $newSwitch = $(newSwitch);
+        var $newCheckBox = $(newCheckBox);
+        $newSwitch.attr("class","newSwitch");
+        $newSwitch.attr("draggable",true);
+        $newSwitch.attr("ondrag","dragStart(this)");
+        
+        $newCheckBox.attr("class","newCheckBox");
+        $newCheckBox.append(chkbx.clone());
+        $newCheckBox.append($(newSwitch));
+        var imgURL = chrome.extension.getURL("switch.png");
+        $newSwitch.css({ background : 'url("'+imgURL+'") center center' });
+        
+        
+        if(chkbx.attr('checked') != "checked")
+        {
+            chkbx.parent().parent().addClass("disable");
+        }
+
+        $newCheckBox.click(function(){
+            
+            var checkBox = chkbx;
+            var newSwitch = $newCheckBox.children(".newSwitch");
+            window.odalisk.status = false;
+            if(checkBox.attr('checked') == "checked")
+            {
+                checkBox.attr('checked', false);
+                newSwitch.animate({left:"0px"},100);
+                $newCheckBox.css({backgroundColor:"#ddd"});
+            }
+            else
+            {
+                checkBox.attr('checked', 'checked');
+                newSwitch.animate({left:"14px"},100);
+                $newCheckBox.css({backgroundColor:"green"});
+                window.odalisk.status = true;
+            }
+
+            if(chkbx.children(".toSwitch").attr("onclick") == undefined)
+            {
+                window.odalisk.enableOdaliskHelper(chkbx);
+            }
+            else
+            { eval(chkbx.children("input[type=\"checkbox\"]").attr("onclick"));
+            }
+
+        });
+
+        
+        if(chkbx.attr('checked') != "checked")
+        {
+            $(newSwitch).css({left:"0px"});
+            $(newCheckBox).css({backgroundColor:"#ddd"});
+        }
+        else
+        {
+            $(newSwitch).css({left:"14px"});
+            $(newCheckBox).css({backgroundColor:"#B28C57"});
+        }
+
+        if(window.isIE)
+        {
+            offset = chkbx.offset();
+            $(newCheckBox).css({display:"block",position:"absolute",left:offset.left+"px",top:(offset.top+2)+"px"});
+        }
+
+        chkbx.replaceWith($(newCheckBox));
+    };
+        
+    this.initCheckBox(this.$checkbox);
 }
+
 
 
 
