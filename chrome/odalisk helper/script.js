@@ -153,7 +153,7 @@ function odaliskHelper() {
         if(value != "")
         {
             $(this.$nextValue.val()).css({background:$(this.$nextValue.val()).attr("data-old-bckg")});
-            if(this.nbQuery == 0) { this.$fieldsKeeper.text('') }
+            
             
             this.$fieldsKeeper.append(newHtml);
             this.$nextKey.val('');
