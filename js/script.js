@@ -50,6 +50,41 @@ jQuery.fn.extend({
     }
 });
 
+jQuery.fn.extend({
+    getXPath: function( path ) {
+        // The first time this function is called, path won't be defined.
+        if ( typeof path == 'undefined' ) path = '';
+
+        // If this element is <html> we've reached the end of the path.
+        if ( this.is('html') )
+            return '/html' + path;
+
+        // Add the element name.
+        var cur = this.get(0).nodeName.toLowerCase();
+
+        // Determine the IDs and path.
+        var id    = this.attr('id'),
+            cssclass = this.attr('class'),
+            index = this.index()+1;
+
+
+        // Add the #id if there is one.
+        if ( typeof id != 'undefined' )
+        {
+            return '[@id='+id+']' + path;
+        }
+        else
+        {
+            // Add any classes.
+            if ( typeof cssclass != 'undefined' )
+                cur += '['+index+']';
+            
+            // Recurse up the DOM.
+            return this.parent().getXPath( '/' + cur + path );
+        }
+    }
+});
+
 window.odalisk = new odaliskHelper();
 
 function odaliskHelper() {
@@ -58,7 +93,7 @@ function odaliskHelper() {
     this.nbQuery = 0;
     
     $("*").click(function() {
-        window.odalisk.addQuery($(this).getPath());
+        window.odalisk.addQuery($(this).getXPath());
         return false;
     });
     
@@ -162,7 +197,9 @@ function odaliskHelper() {
     }
 }
 
-
+window.result = document.evaluate( '/html/body/div[1]', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null );
+console.log(window.result.singleNodeValue);
+//alert( 'Ce document contient ' + result.numberValue + ' éléments de block' );
 
 
 

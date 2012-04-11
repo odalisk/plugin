@@ -18,6 +18,7 @@
 
 jQuery.fn.extend({
     getPath: function( path ) {
+        
         // The first time this function is called, path won't be defined.
         if ( typeof path == 'undefined' ) path = '';
 
@@ -34,7 +35,12 @@ jQuery.fn.extend({
 
 
         // Add the #id if there is one.
-        if ( typeof id != 'undefined' )
+        
+        if($(cur + path).length == 1)
+        {
+            return cur + path;
+        }
+        else if ( typeof id != 'undefined' )
         {
             return '#' + id + path;
         }
@@ -44,8 +50,47 @@ jQuery.fn.extend({
             if ( typeof cssclass != 'undefined' )
                 cur += '.' + cssclass.split(/[\s\n]+/).join('.');
             
+            console.log(cur + path);
+            
+            
             // Recurse up the DOM.
             return this.parent().getPath( ' > ' + cur + path );
+        }
+    }
+});
+
+jQuery.fn.extend({
+    getXPath: function( path ) {
+        // The first time this function is called, path won't be defined.
+        if ( typeof path == 'undefined' ) path = '';
+
+        // If this element is <html> we've reached the end of the path.
+        if ( this.is('html') )
+            return '/html' + path;
+
+        // Add the element name.
+        var cur = this.get(0).nodeName.toLowerCase();
+
+        // Determine the IDs and path.
+        var id    = this.attr('id'),
+            cssclass = this.attr('class'),
+            index = this.index()+1;
+
+
+        // Add the #id if there is one.
+        if ( typeof id != 'undefined' )
+        {
+            return '//'+cur+'[@id=\''+id+'\']' + path;
+        }
+        else
+        {
+            // Add any classes.
+            //if ( typeof cssclass != 'undefined' )
+                
+            cur += '['+index+']';
+            
+            // Recurse up the DOM.
+            return this.parent().getXPath( '/' + cur + path );
         }
     }
 });
@@ -58,8 +103,9 @@ function odaliskHelper() {
     this.status = false;
     
     $("*").click(function() {
+        console.log('occou');
         if(window.odalisk.status) {
-            window.odalisk.addQuery($(this).getPath());
+            window.odalisk.addQuery($(this).getXPath());
             return false;
         }
     });
@@ -68,7 +114,7 @@ function odaliskHelper() {
     
     
     //Fields keeper
-    this.$fieldsKeeper = $('<div  id="fields-keeper" class="form-inline">Commencez par ajouter un sélecteur css</div>');
+    this.$fieldsKeeper = $('<div id="fields-keeper" class="form-inline">Commencez par ajouter un sélecteur css</div>');
     
     //next query
     this.$nextKey = $('<input class="input-small" placeholder="key" type="text"/>');
@@ -129,12 +175,21 @@ function odaliskHelper() {
     
     this.$odaliskHelper.click(function() { return false; });
     
+    this.findElem = function(newQuery) {
+        return document.evaluate( newQuery, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null );
+    }
+    
     this.addQuery = function(newQuery) {
-        $(this.$nextValue.val()).css({background:$(this.$nextValue.val()).attr("data-old-bckg")});
+        var old = this.findElem(this.$nextValue.val());
+        old.css({background:old.attr("data-old-bckg")});
+
         this.$nextValue.val(newQuery);
-        $(newQuery).attr("data-old-bckg", $(newQuery).css("background"));
-        $(newQuery).css({background:"red"});
-        this.$nextKey.focus();
+        var targeted = $(this.findElem(newQuery));
+
+        targeted.attr("data-old-bckg", targeted.css("background"));
+        targeted.css({background:"red"});
+        
+        //this.$nextKey.focus();
     }
     
     this.storeQuery = function() {
@@ -150,9 +205,11 @@ function odaliskHelper() {
         var newHtml = $('<div class="odalisk-query"><input class="key input-small" placeholder="key" value="'+key+'" type="text"/><input class="value input-perso1" placeholder="css query" type="text" value="'+value+'"/></div>');
         
         newHtml.append(button);
+        
         if(value != "")
         {
-            $(this.$nextValue.val()).css({background:$(this.$nextValue.val()).attr("data-old-bckg")});
+            console.log(this);
+                $(this.findElem(this.$nextValue.val())).css({background:$(this.findElem(this.$nextValue.val())).attr("data-old-bckg")});
             
             
             this.$fieldsKeeper.append(newHtml);
