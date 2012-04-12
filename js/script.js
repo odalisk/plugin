@@ -93,6 +93,7 @@ function odaliskHelper() {
     this.nbQuery = 0;
     
     $("*").click(function() {
+        console.log("coucou");
         window.odalisk.addQuery($(this).getXPath());
         return false;
     });

@@ -90,6 +90,7 @@ jQuery.fn.extend({
             cur += '['+index+']';
             
             // Recurse up the DOM.
+            
             return this.parent().getXPath( '/' + cur + path );
         }
     }
@@ -103,11 +104,14 @@ function odaliskHelper() {
     this.status = false;
     
     $("*").click(function() {
-        console.log('occou');
+        
         if(window.odalisk.status) {
+            window.odalisk.status = false;
             window.odalisk.addQuery($(this).getXPath());
+            window.odalisk.status = true;
             return false;
         }
+        //return false;
     });
     
     
@@ -176,20 +180,24 @@ function odaliskHelper() {
     this.$odaliskHelper.click(function() { return false; });
     
     this.findElem = function(newQuery) {
-        return document.evaluate( newQuery, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null );
+        var result = document.evaluate( newQuery, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null );
+        return result.singleNodeValue;
     }
     
     this.addQuery = function(newQuery) {
-        var old = this.findElem(this.$nextValue.val());
-        old.css({background:old.attr("data-old-bckg")});
-
+        if(this.$nextValue.val() != '')
+        {
+            var old = $(this.findElem(this.$nextValue.val()));
+            old.css({background:old.attr("data-old-bckg")});
+        }
+        
         this.$nextValue.val(newQuery);
         var targeted = $(this.findElem(newQuery));
-
+        
         targeted.attr("data-old-bckg", targeted.css("background"));
         targeted.css({background:"red"});
         
-        //this.$nextKey.focus();
+        this.$nextKey.focus();
     }
     
     this.storeQuery = function() {
@@ -353,7 +361,7 @@ function odaliskHelper() {
     this.initCheckBox(this.$checkbox);
 }
 
-
+console.log(window.odalisk.findElem("//table[@id='dataset_contact']/tbody[1]/tr[1]/td[2]/div[1]"));
 
 
 
