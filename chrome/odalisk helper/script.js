@@ -60,10 +60,10 @@ jQuery.fn.extend({
 });
 
 jQuery.fn.extend({
-    getXPath: function( path ) {
+    getXPath: function( path, first) {
         // The first time this function is called, path won't be defined.
         if ( typeof path == 'undefined' ) path = '';
-
+        
         // If this element is <html> we've reached the end of the path.
         if ( this.is('html') )
             return '/html' + path;
@@ -74,11 +74,67 @@ jQuery.fn.extend({
         // Determine the IDs and path.
         var id    = this.attr('id'),
             cssclass = this.attr('class'),
-            index = this.index()+1;
-
-
-        // Add the #id if there is one.
+            index = this.index() + 1,
+            content = this.text();
+        
+        var arg = new Array();
+        var result = '';
+        var args = '';
+        
+        if(first)
+        {
+            arg.push(".='"+content+"'");
+        }
+        
         if ( typeof id != 'undefined' )
+        {
+            arg.push('@id=\''+id+'\'');
+        }
+        
+        if ( typeof cssclass != 'undefined' )
+        {
+            arg.push('@class=\''+cssclass+'\'');
+        }
+        
+        for(var i in arg)
+        {
+            if(i < 1)
+            {
+                args = arg[i];
+            }
+            else
+            {
+                args += ' and '+arg[i];
+            }
+        }
+        
+        if(args != '')
+        {
+            result = '/' + cur + '['+args+']' + path;
+        }
+        else
+        {
+            result = '/' + cur + path;
+        }
+        
+        console.log(window.odalisk.countElem(result));
+        
+        
+        if(window.odalisk.countElem(result) == 1)
+        {
+            return '/' + result;
+        }
+        else
+        {
+            return this.parent().getXPath(result, false);
+        }
+        
+        /*
+        if()
+        {
+            
+        }// Add the #id if there is one.
+        else if ( typeof id != 'undefined' )
         {
             return '//'+cur+'[@id=\''+id+'\']' + path;
         }
@@ -91,8 +147,10 @@ jQuery.fn.extend({
             
             // Recurse up the DOM.
             
-            return this.parent().getXPath( '/' + cur + path );
+            return this.parent().getXPath( '/' + cur + path, false);
         }
+        
+        */
     }
 });
 
@@ -102,12 +160,22 @@ function odaliskHelper() {
     
     this.nbQuery = 0;
     this.status = false;
+    this.value = true;
+    this.currentValue = null;
     
     $("*").click(function() {
         
         if(window.odalisk.status) {
             window.odalisk.status = false;
-            window.odalisk.addQuery($(this).getXPath());
+            if(window.odalisk.value)
+            {
+                window.odalisk.addQuery($(this).getXPath('', false),$(this));
+            }
+            else
+            {
+                window.odalisk.addKey(window.odalisk.findQueryForKey($(this),'', true),$(this));
+                window.odalisk.value = true;
+            }
             window.odalisk.status = true;
             return false;
         }
@@ -115,23 +183,17 @@ function odaliskHelper() {
     });
     
     
-    
-    
     //Fields keeper
     this.$fieldsKeeper = $('<div id="fields-keeper" class="form-inline">Commencez par ajouter un sélecteur css</div>');
     
     //next query
-    this.$nextKey = $('<input class="input-small" placeholder="key" type="text"/>');
-    this.$nextKey.keypress(function(e)
-    {
-        code = (e.keyCode ? e.keyCode : e.which);
-        if (code == 13)  {
-            window.odalisk.storeQuery();
-            e.preventDefault();
-        }
+    this.$nextKey = $('<input class="input-small btn" placeholder="key" type="button" value="key"/>');
+    this.$nextKey.click(function(){
+        this.mode = 0;
+        
     });
     
-    this.$nextValue = $('<input class="input-perso2" placeholder="css query" type="text"/>');
+    this.$nextValue = $('<input class="input-perso2 btn" placeholder="query" type="button" value="value"/>');
     
     this.$nextValue.keypress(function(e)
     {
@@ -152,16 +214,13 @@ function odaliskHelper() {
     this.$checkbox = $('<input type="checkbox" onclick="concole.log(\'coucou\')" class="toSwitch"/>');
     
     
-    
-    
     //generate button
     this.$generateButton = $('<div class="btn btn-wide">Generate code</div>');
     
     this.$odaliskHelper = $('<div id="odalisk-helper"><h2>Odalisk Helper</h2></div>');
     
     
-   
-   this.$odaliskDisplay = $('<div id="odalisk-display"></div>');
+    this.$odaliskDisplay = $('<div id="odalisk-display"></div>');
     this.$odaliskHelper.append(this.$checkbox).append($('<div style="clear:both;"></div>')).append(this.$fieldsKeeper).append(this.$nextQuery).append(this.$generateButton).append(this.$odaliskDisplay);
     
     
@@ -184,13 +243,24 @@ function odaliskHelper() {
         return result.singleNodeValue;
     }
     
-    this.addQuery = function(newQuery) {
+    this.countElem = function(query) {
+        var count = document.evaluate('count(/'+query+')', document, null, XPathResult.ANY_TYPE, null );
+        return count.numberValue;
+    }
+    
+    this.addQuery = function(newQuery, elem) {
+        if(window.odalisk.countElem(newQuery) > 1)
+        {
+            this.getKeyForValue(elem);
+            return;
+        }
+        
         if(this.$nextValue.val() != '')
         {
             var old = $(this.findElem(this.$nextValue.val()));
             old.css({background:old.attr("data-old-bckg")});
         }
-        
+        console.log(newQuery);
         this.$nextValue.val(newQuery);
         var targeted = $(this.findElem(newQuery));
         
@@ -199,6 +269,163 @@ function odaliskHelper() {
         
         this.$nextKey.focus();
     }
+    
+    this.addKey = function(query, elem)
+    {
+        console.log(query);
+        console.log(this.currentValue.getXPath('', false));
+        console.log(this.getRelativeQuery(query, elem, ''));
+        
+    }
+    
+    this.getRelativeQuery = function(keyQuery, keyElem, result)
+    {
+        var key = keyElem;
+        var value = this.currentValue[0];
+        var children = key.parent().children();
+        
+        var child = this.findChildren(children,value)
+        $('*[analyzed="done"]').attr('analyzed','no');
+        if(child != 0)
+        {
+            return keyQuery + '/../' + child;
+        }
+        else
+        {
+            return this.getRelativeQuery(keyQuery+'/..',keyElem.parent(),result);
+        }
+        
+        /*
+        for(i = 0; i < children.length; i++)
+        {
+            console.log(children[i]);
+            console.log(value);
+            console.log(i);
+            if(children[i] === value)
+            {
+                return keyQuery + '/../' + children[i].nodeName.toLowerCase() + '['+(i + 1)+']';
+            }
+            
+            
+        }*/
+        
+        //console.log(children);
+    }
+    
+    this.findChildren = function(children, value) {
+        var arrayIndex = new Array();
+        
+        for(var i = 0; i < children.length; i++)
+        {
+            arrayIndex[children[i].nodeName.toLowerCase()] = (arrayIndex[children[i].nodeName.toLowerCase()]) ? arrayIndex[children[i].nodeName.toLowerCase()] + 1 : 1;
+            console.log(i);
+            if($(children[i]).attr('analyzed') != 'done')
+            {
+                $(children[i]).attr('analyzed', 'done');
+                if(children[i] === value)
+                {
+                    
+                    return children[i].nodeName.toLowerCase() + '['+arrayIndex[children[i].nodeName.toLowerCase()]+']';
+                }
+                
+                childs = $(children[i]).children();
+                
+                if(childs.length > 0)
+                {
+                    var j = i;
+                    var deeper = this.findChildren(childs,value);
+                    console.log('deeper : '+deeper);
+                    if(deeper != 0)
+                    {
+                        return children[j].nodeName.toLowerCase() + '['+arrayIndex[children[i].nodeName.toLowerCase()]+']/' + deeper;
+                    }
+                }
+                
+            }
+        }
+        
+        return 0;
+    }
+    
+    this.findQueryForKey = function(elem, path, first) {
+        // The first time this function is called, path won't be defined.
+        if ( typeof path == 'undefined' ) path = '';
+        
+        // If this element is <html> we've reached the end of the path.
+        if ( elem.is('html') )
+            return '/html' + path;
+
+        // Add the element name.
+        var cur = elem.get(0).nodeName.toLowerCase();
+
+        // Determine the IDs and path.
+        var id    = elem.attr('id'),
+            cssclass = elem.attr('class'),
+            index = elem.index() + 1,
+            content = elem.text();
+        
+        var arg = new Array();
+        var result = '';
+        var args = '';
+        
+        if(first)
+        {
+            arg.push(".='"+content+"'");
+        }
+        
+        if ( typeof id != 'undefined' )
+        {
+            arg.push('@id=\''+id+'\'');
+        }
+        
+        if ( typeof cssclass != 'undefined' )
+        {
+            arg.push('@class=\''+cssclass+'\'');
+        }
+        
+        for(var i in arg)
+        {
+            if(i < 1)
+            {
+                args = arg[i];
+            }
+            else
+            {
+                args += ' and '+arg[i];
+            }
+        }
+        
+        if(args != '')
+        {
+            result = '/' + cur + '['+args+']' + path;
+        }
+        else
+        {
+            result = '/' + cur + path;
+        }
+        
+        
+        console.log(window.odalisk.countElem(result));
+        
+        
+        if(window.odalisk.countElem(result) == 1)
+        {
+            return '/' + result;
+        }
+        else
+        {
+            return this.findQueryForKey(elem.parent(),result, false);
+        }
+    }
+    
+    this.getKeyForValue = function(elem)
+    {
+        alert('You have to select a key for the value');
+        window.odalisk.value = false;
+        this.currentValue = elem;
+    }
+    
+    
     
     this.storeQuery = function() {
         var key = this.$nextKey.val();
@@ -277,7 +504,9 @@ function odaliskHelper() {
         var newQueries = $('#fields-keeper').children('.odalisk-query');
         for(i in newQueries.toArray())
         {
+            
             var query = $(newQueries[i]);
+            console.log(this.findElem(query.children('.value').val()));
             result += '<span class="display-key">[' + query.children('.key').val() + ']</span> ' + $(query.children('.value').val()).html() + '<br/>';
         }
         return result;
@@ -300,6 +529,7 @@ function odaliskHelper() {
         $newCheckBox.append(chkbx.clone());
         $newCheckBox.append($(newSwitch));
         var imgURL = chrome.extension.getURL("switch.png");
+        //var imgURL = './img/switch.png';
         $newSwitch.css({ background : 'url("'+imgURL+'") center center' });
         
         
@@ -361,7 +591,7 @@ function odaliskHelper() {
     this.initCheckBox(this.$checkbox);
 }
 
-console.log(window.odalisk.findElem("//table[@id='dataset_contact']/tbody[1]/tr[1]/td[2]/div[1]"));
+console.log(window.odalisk.findElem("//td[.='Department' and @class='package_label']/../td[2]/div[1]"));
 
 
 
