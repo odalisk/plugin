@@ -56,12 +56,12 @@ jQuery.fn.extend({
         
         if ( typeof id != 'undefined' )
         {
-            arg.push('@id=\''+id+'\'');
+            arg.push('@id="'+id+'"');
         }
         
         if ( typeof cssclass != 'undefined' )
         {
-            arg.push('@class=\''+cssclass+'\'');
+            arg.push('@class="'+cssclass+'"');
         }
         
         for(var i in arg)
@@ -164,7 +164,6 @@ function odaliskHelper() {
     
     this.$odaliskHelper = $('<div id="odalisk-helper"><h2>Odalisk Helper</h2></div>');
     
-    
     this.$odaliskDisplay = $('<div id="odalisk-display"></div>');
     this.$odaliskHelper.append(this.$checkbox).append($('<div style="clear:both;"></div>')).append(this.$fieldsKeeper).append(this.$nextQuery).append(this.$generateButton).append(this.$odaliskDisplay);
     
@@ -251,7 +250,6 @@ function odaliskHelper() {
                 {
                     var j = i;
                     var deeper = this.findChildren(childs,value);
-                    console.log('deeper : '+deeper);
                     if(deeper != 0)
                     {
                         return children[j].nodeName.toLowerCase() + '['+arrayIndex[children[i].nodeName.toLowerCase()]+']/' + deeper;
@@ -292,12 +290,12 @@ function odaliskHelper() {
         
         if ( typeof id != 'undefined' )
         {
-            arg.push('@id=\''+id+'\'');
+            arg.push('@id="'+id+'"');
         }
         
         if ( typeof cssclass != 'undefined' )
         {
-            arg.push('@class=\''+cssclass+'\'');
+            arg.push('@class="'+cssclass+'"');
         }
         
         for(var i in arg)
@@ -341,14 +339,14 @@ function odaliskHelper() {
     
     this.generateCode = function() {
         var php = "array(";
-        var newQueries = $('#fields-keeper').children('.odalisk-query');
-        console.log($(newQueries[0]).children('.key'));
-        for(i in newQueries.toArray())
+        var j = 0;
+        for(i in this.queries)
         {
-            var query = $(newQueries[i]);
-            console.log(i);
-            if(i != 0) { php += ','; }
-            php += '\n\t \'' +query.children('.key').val() + '\' => \'' + query.children('.value').val() + '\'';
+            
+            var query = this.queries[i];
+            if(j != 0) { php += ','; }
+            j++;
+            php += '\n\t \'' + i + '\' => \'' + this.queries[i] + '\'';
         }
         
         php += '\n);';
@@ -451,10 +449,14 @@ function odaliskHelper() {
     
     this.show = function() {
         
+        this.$odaliskHelper.css({bottom:'10px'});
+        $('#odalisk-display').show("fade");
     }
     
     this.hide = function() {
-        
+        var height = this.$odaliskHelper.height();
+        this.$odaliskHelper.css({bottom:(35 - height)+'px'});
+        $('#odalisk-display').hide("fade");
     }
 }
 
