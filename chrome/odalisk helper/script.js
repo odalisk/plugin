@@ -16,48 +16,16 @@
     var path = $('#foo').getPath();
 */
 
-jQuery.fn.extend({
-    getPath: function( path ) {
-        
-        // The first time this function is called, path won't be defined.
-        if ( typeof path == 'undefined' ) path = '';
-
-        // If this element is <html> we've reached the end of the path.
-        if ( this.is('html') )
-            return 'html' + path;
-
-        // Add the element name.
-        var cur = this.get(0).nodeName.toLowerCase();
-
-        // Determine the IDs and path.
-        var id    = this.attr('id'),
-            cssclass = this.attr('class');
-
-
-        // Add the #id if there is one.
-        
-        if($(cur + path).length == 1)
-        {
-            return cur + path;
-        }
-        else if ( typeof id != 'undefined' )
-        {
-            return '#' + id + path;
-        }
-        else
-        {
-            // Add any classes.
-            if ( typeof cssclass != 'undefined' )
-                cur += '.' + cssclass.split(/[\s\n]+/).join('.');
-            
-            console.log(cur + path);
-            
-            
-            // Recurse up the DOM.
-            return this.parent().getPath( ' > ' + cur + path );
-        }
-    }
-});
+window.keys = [
+    'name',
+    'summary',
+    'category',
+    'released_on',
+    'last_updated_on',
+    'owner',
+    'maintainer',
+    'license'
+];
 
 jQuery.fn.extend({
     getXPath: function( path, first) {
@@ -117,10 +85,7 @@ jQuery.fn.extend({
             result = '/' + cur + path;
         }
         
-        console.log(window.odalisk.countElem(result));
-        
-        
-        if(window.odalisk.countElem(result) == 1)
+        if(window.odalisk.countElem('/'+result) == 1)
         {
             return '/' + result;
         }
@@ -129,28 +94,6 @@ jQuery.fn.extend({
             return this.parent().getXPath(result, false);
         }
         
-        /*
-        if()
-        {
-            
-        }// Add the #id if there is one.
-        else if ( typeof id != 'undefined' )
-        {
-            return '//'+cur+'[@id=\''+id+'\']' + path;
-        }
-        else
-        {
-            // Add any classes.
-            //if ( typeof cssclass != 'undefined' )
-                
-            cur += '['+index+']';
-            
-            // Recurse up the DOM.
-            
-            return this.parent().getXPath( '/' + cur + path, false);
-        }
-        
-        */
     }
 });
 
@@ -162,10 +105,12 @@ function odaliskHelper() {
     this.status = false;
     this.value = true;
     this.currentValue = null;
+    this.keyToSelect = null;
+    this.queries = new Object();
     
     $("*").click(function() {
         
-        if(window.odalisk.status) {
+        if(window.odalisk.status || !window.odalisk.value) {
             window.odalisk.status = false;
             if(window.odalisk.value)
             {
@@ -175,44 +120,44 @@ function odaliskHelper() {
             {
                 window.odalisk.addKey(window.odalisk.findQueryForKey($(this),'', true),$(this));
                 window.odalisk.value = true;
+                window.odalisk.status = true;
             }
-            window.odalisk.status = true;
+            
             return false;
         }
-        //return false;
     });
     
+    this.generateFieldsKeeper = function() {
+        this.$fieldsKeeper.html('');
+        for(i in window.keys)
+        {
+            if(this.queries[window.keys[i]])
+            {
+                statusString = "Fait";
+            }
+            else
+            {
+                statusString = "A faire";
+            }
+            
+            
+            this.$fieldsKeeper.append($('<tr><td class="labelxpathquery">'+window.keys[i]+'</td><td class="querystatus">'+statusString+'</td><td class="btncolon"><span class="managequery btn btn-mini" data-label="'+window.keys[i]+'" data-id="'+i+'">Selectioner l\'élément</span></td></tr>'));
+
+        }
+
+        $('.managequery').click(function() {
+            window.odalisk.selectElem($(this).attr('data-label'));
+        });
+    }
     
     //Fields keeper
-    this.$fieldsKeeper = $('<div id="fields-keeper" class="form-inline">Commencez par ajouter un sélecteur css</div>');
+    this.$fieldsKeeper = $('<table id="fields-keeper" class="form-inline"></table>');
     
-    //next query
-    this.$nextKey = $('<input class="input-small btn" placeholder="key" type="button" value="key"/>');
-    this.$nextKey.click(function(){
-        this.mode = 0;
-        
-    });
-    
-    this.$nextValue = $('<input class="input-perso2 btn" placeholder="query" type="button" value="value"/>');
-    
-    this.$nextValue.keypress(function(e)
-    {
-        code = (e.keyCode ? e.keyCode : e.which);
-        if (code == 13)  {
-            window.odalisk.storeQuery();
-            e.preventDefault();
-        }
-    });
-    
-    this.$nextButton = $('<button class="btn">Add</button>');
-    
-    this.$nextQuery = $('<div class="form-inline" id="next-query"></div>');
-    this.$nextQuery.append(this.$nextKey).append(this.$nextValue).append(this.$nextButton);
+    this.generateFieldsKeeper();
     
     //switch
-    
-    this.$checkbox = $('<input type="checkbox" onclick="concole.log(\'coucou\')" class="toSwitch"/>');
-    
+    //this.$checkbox = $('<input type="checkbox" class="toSwitch"/>');
+    this.$checkbox = $('<span class="upanddown"></span>');
     
     //generate button
     this.$generateButton = $('<div class="btn btn-wide">Generate code</div>');
@@ -223,13 +168,10 @@ function odaliskHelper() {
     this.$odaliskDisplay = $('<div id="odalisk-display"></div>');
     this.$odaliskHelper.append(this.$checkbox).append($('<div style="clear:both;"></div>')).append(this.$fieldsKeeper).append(this.$nextQuery).append(this.$generateButton).append(this.$odaliskDisplay);
     
-    
-    
     $("body").append(this.$odaliskHelper);
     
-    
-    this.$nextButton.click(function() {
-        window.odalisk.storeQuery();
+    $('.managequery').click(function() {
+        window.odalisk.selectElem($(this).attr('data-label'));
     });
     
     this.$generateButton.click(function() {
@@ -244,7 +186,7 @@ function odaliskHelper() {
     }
     
     this.countElem = function(query) {
-        var count = document.evaluate('count(/'+query+')', document, null, XPathResult.ANY_TYPE, null );
+        var count = document.evaluate('count('+query+')', document, null, XPathResult.ANY_TYPE, null );
         return count.numberValue;
     }
     
@@ -255,27 +197,19 @@ function odaliskHelper() {
             return;
         }
         
-        if(this.$nextValue.val() != '')
-        {
-            var old = $(this.findElem(this.$nextValue.val()));
-            old.css({background:old.attr("data-old-bckg")});
-        }
-        console.log(newQuery);
-        this.$nextValue.val(newQuery);
-        var targeted = $(this.findElem(newQuery));
-        
-        targeted.attr("data-old-bckg", targeted.css("background"));
-        targeted.css({background:"red"});
-        
-        this.$nextKey.focus();
+        this.save(newQuery);
     }
     
     this.addKey = function(query, elem)
     {
-        console.log(query);
-        console.log(this.currentValue.getXPath('', false));
-        console.log(this.getRelativeQuery(query, elem, ''));
-        
+        this.save(this.getRelativeQuery(query, elem, ''));
+    }
+    
+    this.selectElem = function(key)
+    {
+        window.odalisk.status = true;
+        window.odalisk.keyToSelect = key;
+        window.odalisk.hide();
     }
     
     this.getRelativeQuery = function(keyQuery, keyElem, result)
@@ -294,22 +228,6 @@ function odaliskHelper() {
         {
             return this.getRelativeQuery(keyQuery+'/..',keyElem.parent(),result);
         }
-        
-        /*
-        for(i = 0; i < children.length; i++)
-        {
-            console.log(children[i]);
-            console.log(value);
-            console.log(i);
-            if(children[i] === value)
-            {
-                return keyQuery + '/../' + children[i].nodeName.toLowerCase() + '['+(i + 1)+']';
-            }
-            
-            
-        }*/
-        
-        //console.log(children);
     }
     
     this.findChildren = function(children, value) {
@@ -318,7 +236,6 @@ function odaliskHelper() {
         for(var i = 0; i < children.length; i++)
         {
             arrayIndex[children[i].nodeName.toLowerCase()] = (arrayIndex[children[i].nodeName.toLowerCase()]) ? arrayIndex[children[i].nodeName.toLowerCase()] + 1 : 1;
-            console.log(i);
             if($(children[i]).attr('analyzed') != 'done')
             {
                 $(children[i]).attr('analyzed', 'done');
@@ -405,9 +322,6 @@ function odaliskHelper() {
         }
         
         
-        console.log(window.odalisk.countElem(result));
-        
-        
         if(window.odalisk.countElem(result) == 1)
         {
             return '/' + result;
@@ -423,64 +337,6 @@ function odaliskHelper() {
         alert('You have to select a key for the value');
         window.odalisk.value = false;
         this.currentValue = elem;
-    }
-    
-    
-    
-    this.storeQuery = function() {
-        var key = this.$nextKey.val();
-        var value = this.$nextValue.val();
-        var button = $('<button class="btn btn-danger" data-id="'+this.nbQuery+'">X</button>');
-        
-        button.click(function() {
-           window.odalisk.deleteQuery(parseInt($(this).attr("data-id"))); 
-        });
-        
-        
-        var newHtml = $('<div class="odalisk-query"><input class="key input-small" placeholder="key" value="'+key+'" type="text"/><input class="value input-perso1" placeholder="css query" type="text" value="'+value+'"/></div>');
-        
-        newHtml.append(button);
-        
-        if(value != "")
-        {
-            console.log(this);
-                $(this.findElem(this.$nextValue.val())).css({background:$(this.findElem(this.$nextValue.val())).attr("data-old-bckg")});
-            
-            
-            this.$fieldsKeeper.append(newHtml);
-            this.$nextKey.val('');
-            this.$nextValue.val('');
-            this.$nextKey.focus();
-            
-            this.$odaliskDisplay.html(this.getResult());
-        }
-        else
-        {
-            alert("La requète ne doit pas être vide");
-        }
-    }
-    
-    this.deleteQuery = function(queryId) {
-        var queries = $("#fields-keeper").children();
-        
-        for(var i in queries)
-        {
-            if(i == queryId)
-            {
-                
-                $(queries[i]).remove();
-                this.nbQuery--;
-                this.$odaliskDisplay.html(this.getResult());
-                
-                if(this.nbQuery == 0)
-                {
-                    this.$fieldsKeeper.text('Commencez par ajouter un sélecteur css');
-                }
-                return;
-            }
-        }
-        
-        this.$odaliskDisplay.html(this.getResult());
     }
     
     this.generateCode = function() {
@@ -499,21 +355,14 @@ function odaliskHelper() {
         alert(php);
     }
     
-    this.getResult = function() {
+    this.generateDisplay = function() {
         var result = '';
-        var newQueries = $('#fields-keeper').children('.odalisk-query');
-        for(i in newQueries.toArray())
+        for(i in this.queries)
         {
-            
-            var query = $(newQueries[i]);
-            console.log(this.findElem(query.children('.value').val()));
-            result += '<span class="display-key">[' + query.children('.key').val() + ']</span> ' + $(query.children('.value').val()).html() + '<br/>';
+            var query = this.queries[i];
+            result += '<span class="display-key">[' + i + ']</span> ' + $(this.findElem(this.queries[i])).html() + '<br/>';
         }
-        return result;
-    }
-    
-    this.enableOdaliskHelper = function(elem) {
-        window.odalisk.status = (window.odalisk.status) ? 1 : 0 ;
+        $('#odalisk-display').html(result);
     }
     
     this.initCheckBox = function(chkbx) {
@@ -587,8 +436,26 @@ function odaliskHelper() {
 
         chkbx.replaceWith($(newCheckBox));
     };
+    
+    
+    
+    this.save = function(query) {
+        console.log(this.keyToSelect);
+        this.queries[this.keyToSelect] = query;
+        window.odalisk.show();
+        this.generateFieldsKeeper();
+        this.generateDisplay();
+        console.log(this.queries);
+        this.status = false;
+    }
+    
+    this.show = function() {
         
-    this.initCheckBox(this.$checkbox);
+    }
+    
+    this.hide = function() {
+        
+    }
 }
 
 console.log(window.odalisk.findElem("//td[.='Department' and @class='package_label']/../td[2]/div[1]"));

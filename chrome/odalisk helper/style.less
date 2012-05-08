@@ -72,7 +72,12 @@ td { vertical-align: top; }
     box-sizing:border-box;
 }
 
+.node-type-ckan-package td { padding:0px !important; }
+
 #odalisk-helper {
+    * {
+        font-size:13px !important;
+    }
     z-index:10000000000 !important;
     font-family:Helvetica !important;
     @import "./bootstrap/bootstrap.less";
@@ -105,15 +110,41 @@ td { vertical-align: top; }
     }
     
     #fields-keeper {
+        * {
+            font-size:12px !important;
+        }
         width:100%;
+        
+        td {
+            vertical-align:middle;
+            
+        }
+        .btn {
+            
+            margin-bottom:2px;
+            margin-top:2px;
+        }
+        
+        .labelxpathquery {
+            padding-left:10px !important;
+        }
+        
+        .btncolon {
+            width:120px;
+            span {
+                font-size:11px !important;
+            }
+        }
+        
+        .queryvalue {
+            width:50px;
+            
+            
+        }
     }
     
     .odalisk-query {
-        .btn {
-            
-            margin-bottom:3px;
-            margin-top:3px;
-        }
+        
     }
     
     .input-perso1 {
@@ -144,6 +175,7 @@ td { vertical-align: top; }
         overflow: auto;
         
         .display-key {
+            font-size:11px !important;
             color:#00FF00;
         }
     }
