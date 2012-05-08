@@ -157,7 +157,7 @@ function odaliskHelper() {
     
     //switch
     //this.$checkbox = $('<input type="checkbox" class="toSwitch"/>');
-    this.$checkbox = $('<span class="upanddown"></span>');
+    this.$checkbox = $('<span id="helper-status"></span>');
     
     //generate button
     this.$generateButton = $('<div class="btn btn-wide">Generate code</div>');
@@ -208,6 +208,7 @@ function odaliskHelper() {
     {
         window.odalisk.status = true;
         window.odalisk.keyToSelect = key;
+        $('#helper-status').html('Sélection de l\'attribut '+this.keyToSelect);
         window.odalisk.hide();
     }
     
@@ -333,6 +334,7 @@ function odaliskHelper() {
     this.getKeyForValue = function(elem)
     {
         alert('You have to select a key for the value');
+        $('#helper-status').html('Sélection d\'une clé pour l\'attribut '+this.keyToSelect);
         window.odalisk.value = false;
         this.currentValue = elem;
     }
@@ -448,15 +450,17 @@ function odaliskHelper() {
     }
     
     this.show = function() {
-        
-        this.$odaliskHelper.css({bottom:'10px'});
-        $('#odalisk-display').show("fade");
+        this.$odaliskHelper.animate({bottom:'10px'});
+        this.$odaliskDisplay.animate({bottom:'10px'});
+        $('#helper-status').html('');
     }
     
     this.hide = function() {
         var height = this.$odaliskHelper.height();
-        this.$odaliskHelper.css({bottom:(35 - height)+'px'});
-        $('#odalisk-display').hide("fade");
+        this.$odaliskHelper.animate({bottom:($('#odalisk-helper h2').height() - height)+'px'});
+        var height = this.$odaliskDisplay.height();
+        this.$odaliskDisplay.animate({bottom:(-(height + 20))+'px'});
+        
     }
 }
 
